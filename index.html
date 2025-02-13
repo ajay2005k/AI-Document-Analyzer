@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Document Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .drag-area {
+            border: 2px dashed #4a5568;
+            min-height: 200px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .drag-area.active {
+            border-color: #4299e1;
+            background-color: rgba(235, 248, 255, 0.95);
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .loading-animation {
+            display: inline-block;
+            position: relative;
+            width: 80px;
+            height: 13px;
+        }
+        .loading-animation div {
+            position: absolute;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #4299e1;
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+        .loading-animation div:nth-child(1) {
+            left: 8px;
+            animation: loading1 0.6s infinite;
+        }
+        .loading-animation div:nth-child(2) {
+            left: 8px;
+            animation: loading2 0.6s infinite;
+        }
+        .loading-animation div:nth-child(3) {
+            left: 32px;
+            animation: loading2 0.6s infinite;
+        }
+        .loading-animation div:nth-child(4) {
+            left: 56px;
+            animation: loading3 0.6s infinite;
+        }
+        @keyframes loading1 {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+        @keyframes loading2 {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(24px, 0); }
+        }
+        @keyframes loading3 {
+            0% { transform: scale(1); }
+            100% { transform: scale(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="particles-js"></div>
+    
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <svg class="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span class="ml-2 text-xl font-semibold text-gray-800">AI Document Assistant</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">
+                Intelligent Document Analysis
+            </h1>
+            <p class="text-gray-600 text-lg">
+                Upload your PDF and ask questions to get instant, accurate answers
+            </p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="glass-morphism rounded-xl shadow-xl p-8 mb-8">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-800 flex items-center">
+                <svg class="h-6 w-6 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Upload Document
+            </h2>
+            <div class="drag-area cursor-pointer p-8" id="drop-zone">
+                <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <p class="mt-4 text-sm text-gray-600">
+                        Drag and drop your PDF here or click to select
+                    </p>
+                    <p class="mt-2 text-xs text-gray-500">
+                        Supported format: PDF (Max 16MB)
+                    </p>
+                </div>
+                <input type="file" id="file-input" class="hidden" accept=".pdf">
+            </div>
+            <div id="upload-status" class="mt-4 text-center hidden">
+                <div class="loading-animation mx-auto">
+                    <div></div><div></div><div></div><div></div>
+                </div>
+                <p class="text-sm font-medium mt-2"></p>
+            </div>
+        </div>
+
+        <!-- Question Section -->
+        <div class="glass-morphism rounded-xl shadow-xl p-8">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-800 flex items-center">
+                <svg class="h-6 w-6 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Ask Questions
+            </h2>
+            <div class="mb-4">
+                <div class="relative">
+                    <input type="text" id="question-input" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Type your question here...">
+                    <button id="ask-button" 
+                            class="absolute right-2 top-2 bg-blue-500 text-white py-1 px-4 rounded-lg hover:bg-blue-600 transition duration-200">
+                        Ask
+                    </button>
+                </div>
+            </div>
+
+            <!-- Answer Display -->
+            <div id="answer-section" class="mt-6 hidden">
+                <h3 class="text-lg font-semibold mb-2 text-gray-800">Answer:</h3>
+                <div id="answer-text" class="p-6 bg-white rounded-lg border border-gray-200 shadow-sm"></div>
+                <div id="confidence" class="mt-2 text-sm text-gray-600 flex items-center">
+                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-12 py-6 text-center text-gray-600">
+        <p>© 2025 Team Codespoof. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Initialize particles.js
+        particlesJS('particles-js',
+        {
+            "particles": {
+                "number": {
+                    "value": 80,
+                    "density": {
+                        "enable": true,
+                        "value_area": 800
+                    }
+                },
+                "color": {
+                    "value": "#4299e1"
+                },
+                "shape": {
+                    "type": "circle"
+                },
+                "opacity": {
+                    "value": 0.5,
+                    "random": false
+                },
+                "size": {
+                    "value": 3,
+                    "random": true
+                },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#4299e1",
+                    "opacity": 0.4,
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 2,
+                    "direction": "none",
+                    "random": false,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": {
+                        "enable": true,
+                        "mode": "grab"
+                    },
+                    "onclick": {
+                        "enable": true,
+                        "mode": "push"
+                    },
+                    "resize": true
+                }
+            },
+            "retina_detect": true
+        });
+
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadStatus = document.getElementById('upload-status');
+        const questionInput = document.getElementById('question-input');
+        const askButton = document.getElementById('ask-button');
+        const answerSection = document.getElementById('answer-section');
+        const answerText = document.getElementById('answer-text');
+        const confidenceText = document.getElementById('confidence');
+
+        // Drag and drop handlers
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('active');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('active');
+            });
+        });
+
+        // Handle file drop
+        dropZone.addEventListener('drop', handleDrop);
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'application/pdf') {
+                    uploadFile(file);
+                } else {
+                    showUploadStatus('Please upload a PDF file', 'error');
+                }
+            }
+        }
+
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            showUploadStatus('Uploading...', 'info');
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showUploadStatus(data.error, 'error');
+                } else {
+                    showUploadStatus(data.success, 'success');
+                }
+            })
+            .catch(error => {
+                showUploadStatus('Upload failed: ' + error, 'error');
+            });
+        }
+
+        function showUploadStatus(message, type) {
+            uploadStatus.classList.remove('hidden');
+            uploadStatus.querySelector('p').textContent = message;
+            uploadStatus.querySelector('p').className = 
+                type === 'error' ? 'text-red-500' :
+                type === 'success' ? 'text-green-500' :
+                'text-blue-500';
+        }
+
+        // Handle question asking
+        askButton.addEventListener('click', askQuestion);
+        questionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                askQuestion();
+            }
+        });
+
+        function askQuestion() {
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            askButton.disabled = true;
+            askButton.textContent = 'Processing...';
+
+            fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question: question })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAnswer(data.error, false);
+                } else {
+                    showAnswer(data.answer, true, data.confidence);
+                }
+            })
+            .catch(error => {
+                showAnswer('Error: ' + error, false);
+            })
+            .finally(() => {
+                askButton.disabled = false;
+                askButton.textContent = 'Ask Question';
+            });
+        }
+
+        function showAnswer(text, isSuccess, confidence = null) {
+            answerSection.classList.remove('hidden');
+            answerText.textContent = text;
+            answerText.className = isSuccess ? 
+                'p-4 bg-gray-50 rounded-lg' : 
+                'p-4 bg-red-50 text-red-500 rounded-lg';
+            
+            if (confidence !== null) {
+                confidenceText.textContent = `Confidence: ${confidence ? 'High' : 'Low'}`;
+                confidenceText.classList.remove('hidden');
+            } else {
+                confidenceText.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
